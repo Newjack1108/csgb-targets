@@ -258,7 +258,7 @@ router.post('/import/production', upload.single('csvfile'), async (req, res) => 
 /**
  * GET /csv/export/orders - Export all orders as CSV
  */
-router.get('/export/orders', (req, res) => {
+router.get('/export/orders', async (req, res) => {
     try {
         const ordersResult = await db.query(
             `SELECT o.*, u.email as sales_rep_email, u.name as sales_rep_name
@@ -301,7 +301,7 @@ router.get('/export/orders', (req, res) => {
 /**
  * GET /csv/export/production - Export all production entries as CSV
  */
-router.get('/export/production', (req, res) => {
+router.get('/export/production', async (req, res) => {
     try {
         const productionResult = await db.query(
             'SELECT * FROM production_boxes ORDER BY production_date DESC, created_at DESC'
