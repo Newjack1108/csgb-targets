@@ -110,7 +110,20 @@ async function initializeDatabase() {
 // Start server
 async function startServer() {
     try {
+        // Log environment info
+        console.log('Starting server...');
+        console.log('PORT:', process.env.PORT || '3000 (default)');
+        console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
+        console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'NOT SET - This will cause errors!');
+        
         // Test database connection
+        if (!process.env.DATABASE_URL) {
+            console.error('ERROR: DATABASE_URL environment variable is not set!');
+            console.error('Railway should provide this automatically when PostgreSQL service is connected.');
+            process.exit(1);
+        }
+        
+        console.log('Testing database connection...');
         await db.query('SELECT NOW()');
         console.log('Database connection successful');
         
@@ -118,12 +131,14 @@ async function startServer() {
         await initializeDatabase();
         
         // Start listening - Railway requires binding to 0.0.0.0
+        console.log(`Starting HTTP server on 0.0.0.0:${PORT}...`);
         app.listen(PORT, '0.0.0.0', () => {
-            console.log(`Server running on port ${PORT}`);
+            console.log(`✅ Server running on port ${PORT}`);
             console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log('Server is ready to accept connections');
         });
     } catch (error) {
-        console.error('Failed to start server:', error);
+        console.error('❌ Failed to start server:', error.message);
         console.error('Error stack:', error.stack);
         process.exit(1);
     }
