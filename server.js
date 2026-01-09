@@ -88,24 +88,15 @@ async function initializeDatabase() {
                 console.log('Seeding database...');
                 
                 // Read and execute seeds
+                // Execute entire file as one query - PostgreSQL handles multiple statements
                 const seedsSQL = await fs.readFile(path.join(__dirname, 'db', 'seeds.sql'), 'utf8');
-                // Split by semicolons and execute each statement
-                const statements = seedsSQL.split(';').filter(s => s.trim().length > 0);
-                
-                for (const statement of statements) {
-                    if (statement.trim()) {
-                        try {
-                            await db.query(statement);
-                        } catch (err) {
-                            // Ignore errors for DO blocks and other complex statements
-                            if (!err.message.includes('syntax error')) {
-                                console.error('Seed error:', err.message);
-                            }
-                        }
-                    }
+                try {
+                    await db.query(seedsSQL);
+                    console.log('Database seeded successfully.');
+                } catch (err) {
+                    console.error('Seed error:', err.message);
+                    // Continue anyway - some seeds may have succeeded
                 }
-                
-                console.log('Database seeded successfully.');
             }
         } else {
             console.log('Database already initialized.');
