@@ -24,7 +24,7 @@ pool.on('connect', () => {
 
 pool.on('error', (err) => {
     console.error('Unexpected database error:', err);
-}););
+});
 
 // Helper function to execute queries
 pool.query = pool.query.bind(pool);
