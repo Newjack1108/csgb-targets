@@ -117,15 +117,27 @@ async function startServer() {
         // Initialize database
         await initializeDatabase();
         
-        // Start listening
-        app.listen(PORT, () => {
+        // Start listening - Railway requires binding to 0.0.0.0
+        app.listen(PORT, '0.0.0.0', () => {
             console.log(`Server running on port ${PORT}`);
             console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
         });
     } catch (error) {
         console.error('Failed to start server:', error);
+        console.error('Error stack:', error.stack);
         process.exit(1);
     }
 }
+
+// Handle uncaught errors
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+});
 
 startServer();
