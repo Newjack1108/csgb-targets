@@ -64,16 +64,29 @@ router.post('/login', async (req, res) => {
         req.session.userRole = user.role;
         req.session.userEmail = user.email;
         
-        // Redirect based on role
-        if (user.role === 'sales') {
-            res.redirect('/sales/dashboard');
-        } else if (user.role === 'production') {
-            res.redirect('/production/dashboard');
-        } else if (user.role === 'director') {
-            res.redirect('/sales/dashboard');
-        } else {
-            res.redirect('/login');
-        }
+        console.log('Login successful for:', user.email, 'Role:', user.role);
+        console.log('Session ID:', req.sessionID);
+        
+        // Save session before redirect
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.render('auth/login', { 
+                    error: 'Session error. Please try again.' 
+                });
+            }
+            
+            // Redirect based on role
+            if (user.role === 'sales') {
+                res.redirect('/sales/dashboard');
+            } else if (user.role === 'production') {
+                res.redirect('/production/dashboard');
+            } else if (user.role === 'director') {
+                res.redirect('/sales/dashboard');
+            } else {
+                res.redirect('/login');
+            }
+        });
     } catch (error) {
         console.error('Login error:', error);
         res.render('auth/login', { 
