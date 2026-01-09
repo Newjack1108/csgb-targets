@@ -41,6 +41,7 @@ app.use(userLocals);
 
 // Routes
 app.use('/', require('./routes/auth'));
+app.use('/admin', require('./routes/admin')); // Temporary admin routes for setup
 app.use('/sales', require('./routes/sales'));
 app.use('/production', require('./routes/production'));
 app.use('/settings', require('./routes/settings'));
