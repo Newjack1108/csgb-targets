@@ -6,7 +6,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const csv = require('csv-parser');
-const { stringify } = require('csv-stringify/sync');
+const { stringify } = require('csv-stringify');
 const fs = require('fs').promises;
 const path = require('path');
 const { createReadStream } = require('fs');
@@ -270,23 +270,28 @@ router.get('/export/orders', async (req, res) => {
         const orders = ordersResult.rows;
 
         // Convert to CSV
-        const csvData = stringify(orders, {
-            header: true,
-            columns: [
-                'id',
-                'order_date',
-                'order_ref',
-                'sales_rep_email',
-                'boxes_qty',
-                'box_rrp_total',
-                'box_net_total',
-                'box_build_cost_total',
-                'install_revenue',
-                'extras_revenue',
-                'notes',
-                'created_at',
-                'updated_at'
-            ]
+        const csvData = await new Promise((resolve, reject) => {
+            stringify(orders, {
+                header: true,
+                columns: [
+                    'id',
+                    'order_date',
+                    'order_ref',
+                    'sales_rep_email',
+                    'boxes_qty',
+                    'box_rrp_total',
+                    'box_net_total',
+                    'box_build_cost_total',
+                    'install_revenue',
+                    'extras_revenue',
+                    'notes',
+                    'created_at',
+                    'updated_at'
+                ]
+            }, (err, output) => {
+                if (err) reject(err);
+                else resolve(output);
+            });
         });
 
         res.setHeader('Content-Type', 'text/csv');
@@ -315,18 +320,23 @@ router.get('/export/production', async (req, res) => {
         }));
 
         // Convert to CSV
-        const csvData = stringify(entries, {
-            header: true,
-            columns: [
-                'id',
-                'production_date',
-                'boxes_built',
-                'boxes_over_cost',
-                'over_cost_reasons_json',
-                'rework_boxes',
-                'notes',
-                'created_at'
-            ]
+        const csvData = await new Promise((resolve, reject) => {
+            stringify(entries, {
+                header: true,
+                columns: [
+                    'id',
+                    'production_date',
+                    'boxes_built',
+                    'boxes_over_cost',
+                    'over_cost_reasons_json',
+                    'rework_boxes',
+                    'notes',
+                    'created_at'
+                ]
+            }, (err, output) => {
+                if (err) reject(err);
+                else resolve(output);
+            });
         });
 
         res.setHeader('Content-Type', 'text/csv');
@@ -341,22 +351,27 @@ router.get('/export/production', async (req, res) => {
 /**
  * GET /csv/template/orders - Download orders CSV template
  */
-router.get('/template/orders', (req, res) => {
-    const template = stringify([
-        {
-            order_date: '2024-07-15',
-            order_ref: 'ORD-001',
-            sales_rep_email: 'alice@example.com',
-            boxes_qty: '2',
-            box_rrp_total: '2800.00',
-            box_net_total: '2600.00',
-            box_build_cost_total: '1400.00',
-            install_revenue: '500.00',
-            extras_revenue: '200.00',
-            notes: 'Example order'
-        }
-    ], {
-        header: true
+router.get('/template/orders', async (req, res) => {
+    const template = await new Promise((resolve, reject) => {
+        stringify([
+            {
+                order_date: '2024-07-15',
+                order_ref: 'ORD-001',
+                sales_rep_email: 'alice@example.com',
+                boxes_qty: '2',
+                box_rrp_total: '2800.00',
+                box_net_total: '2600.00',
+                box_build_cost_total: '1400.00',
+                install_revenue: '500.00',
+                extras_revenue: '200.00',
+                notes: 'Example order'
+            }
+        ], {
+            header: true
+        }, (err, output) => {
+            if (err) reject(err);
+            else resolve(output);
+        });
     });
 
     res.setHeader('Content-Type', 'text/csv');
@@ -367,18 +382,23 @@ router.get('/template/orders', (req, res) => {
 /**
  * GET /csv/template/production - Download production CSV template
  */
-router.get('/template/production', (req, res) => {
-    const template = stringify([
-        {
-            production_date: '2024-07-15',
-            boxes_built: '5',
-            boxes_over_cost: '1',
-            over_cost_reasons_json: '[{"reason": "material", "boxes": 1}]',
-            rework_boxes: '0',
-            notes: 'Example production entry'
-        }
-    ], {
-        header: true
+router.get('/template/production', async (req, res) => {
+    const template = await new Promise((resolve, reject) => {
+        stringify([
+            {
+                production_date: '2024-07-15',
+                boxes_built: '5',
+                boxes_over_cost: '1',
+                over_cost_reasons_json: '[{"reason": "material", "boxes": 1}]',
+                rework_boxes: '0',
+                notes: 'Example production entry'
+            }
+        ], {
+            header: true
+        }, (err, output) => {
+            if (err) reject(err);
+            else resolve(output);
+        });
     });
 
     res.setHeader('Content-Type', 'text/csv');
