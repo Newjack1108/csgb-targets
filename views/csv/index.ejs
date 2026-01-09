@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Management - CSGB Targets</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <main class="container">
+        <h2>Data Management - CSV Import/Export</h2>
+        
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-error"><%= error %></div>
+        <% } %>
+        
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success"><%= success %></div>
+        <% } %>
+
+        <% if (typeof importResult !== 'undefined' && importResult) { %>
+            <div class="import-results">
+                <h3>Import Results</h3>
+                <p><strong>Total rows:</strong> <%= importResult.total %></p>
+                <p><strong>Successful:</strong> <span style="color: green;"><%= importResult.success %></span></p>
+                <p><strong>Failed:</strong> <span style="color: red;"><%= importResult.failed %></span></p>
+                <% if (importResult.errors && importResult.errors.length > 0) { %>
+                    <div class="error-list">
+                        <h4>Errors:</h4>
+                        <ul>
+                            <% importResult.errors.forEach(err => { %>
+                                <li><%= err %></li>
+                            <% }); %>
+                        </ul>
+                    </div>
+                <% } %>
+            </div>
+        <% } %>
+
+        <div class="csv-sections">
+            <!-- Orders Section -->
+            <section class="csv-section">
+                <h3>Orders</h3>
+                
+                <div class="csv-actions">
+                    <div class="csv-upload">
+                        <h4>Import Orders</h4>
+                        <p>Upload a CSV file to import orders. Download template below for format.</p>
+                        <form method="POST" action="/csv/import/orders" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="orders_file">CSV File</label>
+                                <input type="file" id="orders_file" name="csvfile" accept=".csv" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload and Import</button>
+                        </form>
+                        <p class="help-text">
+                            <a href="/csv/template/orders" class="btn btn-sm">Download Template</a>
+                        </p>
+                    </div>
+
+                    <div class="csv-export">
+                        <h4>Export Orders</h4>
+                        <p>Download all orders as a CSV file.</p>
+                        <a href="/csv/export/orders" class="btn btn-primary">Export Orders CSV</a>
+                    </div>
+                </div>
+
+                <div class="csv-format">
+                    <h4>Orders CSV Format</h4>
+                    <p>Required columns:</p>
+                    <ul>
+                        <li><code>order_date</code> - Date (YYYY-MM-DD)</li>
+                        <li><code>order_ref</code> - Order reference (optional)</li>
+                        <li><code>sales_rep_email</code> - Sales rep email address</li>
+                        <li><code>boxes_qty</code> - Number of boxes (integer)</li>
+                        <li><code>box_rrp_total</code> - Total RRP (£)</li>
+                        <li><code>box_net_total</code> - Total net price (£)</li>
+                        <li><code>box_build_cost_total</code> - Total build cost (£)</li>
+                        <li><code>install_revenue</code> - Install revenue (£, optional, default: 0)</li>
+                        <li><code>extras_revenue</code> - Extras revenue (£, optional, default: 0)</li>
+                        <li><code>notes</code> - Notes (optional)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Production Section -->
+            <section class="csv-section">
+                <h3>Production Entries</h3>
+                
+                <div class="csv-actions">
+                    <div class="csv-upload">
+                        <h4>Import Production Entries</h4>
+                        <p>Upload a CSV file to import production entries. Download template below for format.</p>
+                        <form method="POST" action="/csv/import/production" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="production_file">CSV File</label>
+                                <input type="file" id="production_file" name="csvfile" accept=".csv" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload and Import</button>
+                        </form>
+                        <p class="help-text">
+                            <a href="/csv/template/production" class="btn btn-sm">Download Template</a>
+                        </p>
+                    </div>
+
+                    <div class="csv-export">
+                        <h4>Export Production Entries</h4>
+                        <p>Download all production entries as a CSV file.</p>
+                        <a href="/csv/export/production" class="btn btn-primary">Export Production CSV</a>
+                    </div>
+                </div>
+
+                <div class="csv-format">
+                    <h4>Production CSV Format</h4>
+                    <p>Required columns:</p>
+                    <ul>
+                        <li><code>production_date</code> - Date (YYYY-MM-DD)</li>
+                        <li><code>boxes_built</code> - Number of boxes built (integer)</li>
+                        <li><code>boxes_over_cost</code> - Boxes over cost (integer, optional, default: 0)</li>
+                        <li><code>over_cost_reasons_json</code> - JSON array of reasons (optional)</li>
+                        <li><code>rework_boxes</code> - Number of rework boxes (integer, optional, default: 0)</li>
+                        <li><code>notes</code> - Notes (optional)</li>
+                    </ul>
+                    <p><strong>Note:</strong> <code>over_cost_reasons_json</code> should be a JSON array, e.g.: 
+                    <code>[{"reason": "material", "boxes": 1}]</code></p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>

@@ -7,6 +7,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const fs = require('fs').promises;
+const multer = require('multer');
 require('dotenv').config();
 
 const db = require('./db');
@@ -23,6 +24,28 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Multer configuration for file uploads
+const upload = multer({
+    dest: 'uploads/',
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only CSV files are allowed'));
+        }
+    }
+});
+
+// Ensure uploads directory exists
+(async () => {
+    try {
+        await fs.mkdir('uploads', { recursive: true });
+    } catch (error) {
+        // Directory already exists or other error - ignore
+    }
+})();
 
 // Session configuration
 app.use(session({
@@ -49,6 +72,7 @@ app.use('/sales', require('./routes/sales'));
 app.use('/production', require('./routes/production'));
 app.use('/settings', require('./routes/settings'));
 app.use('/users', require('./routes/users'));
+app.use('/csv', upload.single('csvfile'), require('./routes/csv'));
 
 // Root redirect
 app.get('/', (req, res) => {
