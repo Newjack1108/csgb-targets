@@ -9,6 +9,41 @@ const bcrypt = require('bcrypt');
 const db = require('../db');
 
 /**
+ * GET /admin/check-users - Check what users exist in database
+ */
+router.get('/check-users', async (req, res) => {
+    try {
+        const result = await db.query('SELECT id, name, email, role, created_at FROM users ORDER BY email');
+        res.send(`
+            <html>
+                <head><title>Users in Database</title></head>
+                <body style="font-family: Arial; padding: 20px;">
+                    <h1>Users in Database</h1>
+                    <p>Found ${result.rows.length} users:</p>
+                    <table border="1" cellpadding="10" style="border-collapse: collapse;">
+                        <tr>
+                            <th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Created</th>
+                        </tr>
+                        ${result.rows.map(u => `
+                            <tr>
+                                <td>${u.id}</td>
+                                <td>${u.name}</td>
+                                <td>${u.email}</td>
+                                <td>${u.role}</td>
+                                <td>${u.created_at}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                    <p><a href="/admin/fix-users">Fix Users</a> | <a href="/login">Login</a></p>
+                </body>
+            </html>
+        `);
+    } catch (error) {
+        res.status(500).send(`Error: ${error.message}`);
+    }
+});
+
+/**
  * GET /admin/fix-users - Fix user passwords (one-time use)
  * This route can be accessed without authentication for initial setup
  * Remove or protect this route after use!
@@ -28,19 +63,32 @@ router.get('/fix-users', async (req, res) => {
             { name: 'Diana Director', email: 'diana@example.com', role: 'director' }
         ];
         
+        // Test the password hash works
+        const testMatch = await bcrypt.compare('password123', passwordHash);
+        console.log('Password hash test:', testMatch ? 'PASS' : 'FAIL');
+        
         const results = [];
         for (const user of users) {
             try {
-                await db.query(
+                const insertResult = await db.query(
                     `INSERT INTO users (name, email, password_hash, role) 
                      VALUES ($1, $2, $3, $4)
                      ON CONFLICT (email) DO UPDATE SET
                          password_hash = EXCLUDED.password_hash,
                          name = EXCLUDED.name,
-                         role = EXCLUDED.role`,
+                         role = EXCLUDED.role
+                     RETURNING id, email`,
                     [user.name, user.email, passwordHash, user.role]
                 );
-                results.push(`✅ Fixed: ${user.email}`);
+                
+                // Verify the password works
+                const verifyUser = await db.query('SELECT password_hash FROM users WHERE email = $1', [user.email]);
+                if (verifyUser.rows.length > 0) {
+                    const verifyMatch = await bcrypt.compare('password123', verifyUser.rows[0].password_hash);
+                    results.push(`✅ ${user.email}: ${verifyMatch ? 'Password verified' : 'Password verification FAILED'}`);
+                } else {
+                    results.push(`❌ ${user.email}: User not found after insert`);
+                }
             } catch (err) {
                 results.push(`❌ Error with ${user.email}: ${err.message}`);
             }
