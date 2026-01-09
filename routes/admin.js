@@ -125,4 +125,55 @@ router.get('/fix-users', async (req, res) => {
     }
 });
 
+/**
+ * GET /admin/test-login - Test if a password works for a user
+ * Usage: /admin/test-login?email=diana@example.com&password=password123
+ */
+router.get('/test-login', async (req, res) => {
+    try {
+        const { email, password } = req.query;
+        
+        if (!email || !password) {
+            return res.send(`
+                <html>
+                    <body style="font-family: Arial; padding: 20px;">
+                        <h1>Test Login</h1>
+                        <p>Usage: /admin/test-login?email=diana@example.com&password=password123</p>
+                        <p><a href="/admin/test-login?email=diana@example.com&password=password123">Test Diana</a></p>
+                    </body>
+                </html>
+            `);
+        }
+        
+        const result = await db.query(
+            'SELECT id, name, email, password_hash, role FROM users WHERE email = $1',
+            [email]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.send(`User ${email} not found in database.`);
+        }
+        
+        const user = result.rows[0];
+        const passwordMatch = await bcrypt.compare(password, user.password_hash);
+        
+        res.send(`
+            <html>
+                <head><title>Login Test</title></head>
+                <body style="font-family: Arial; padding: 20px;">
+                    <h1>Login Test Result</h1>
+                    <p><strong>Email:</strong> ${email}</p>
+                    <p><strong>User Found:</strong> ${user.name} (${user.role})</p>
+                    <p><strong>Password Match:</strong> ${passwordMatch ? '✅ YES' : '❌ NO'}</p>
+                    <p><strong>Password Hash:</strong> ${user.password_hash.substring(0, 30)}...</p>
+                    ${passwordMatch ? '<p style="color: green;">✅ Password is correct! You should be able to login.</p>' : '<p style="color: red;">❌ Password does not match. The hash in database is wrong.</p>'}
+                    <p><a href="/admin/fix-users">Fix Users</a> | <a href="/login">Try Login</a></p>
+                </body>
+            </html>
+        `);
+    } catch (error) {
+        res.status(500).send(`Error: ${error.message}`);
+    }
+});
+
 module.exports = router;
