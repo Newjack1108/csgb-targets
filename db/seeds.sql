@@ -1,12 +1,15 @@
 -- Seed users (password is 'password123' for all users)
 -- NOTE: These are example users. In production, change passwords immediately.
--- The password hash below is for 'password123' - generate new ones with: node -e "require('bcrypt').hash('yourpassword', 10).then(h => console.log(h))"
+-- The password hash below is for 'password123' - verified working hash
 INSERT INTO users (name, email, password_hash, role) VALUES
-('Alice Sales', 'alice@example.com', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'sales'),
-('Bob Sales', 'bob@example.com', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'sales'),
-('Charlie Production', 'charlie@example.com', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'production'),
-('Diana Director', 'diana@example.com', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'director')
-ON CONFLICT (email) DO NOTHING;
+('Alice Sales', 'alice@example.com', '$2b$10$zZp312mqbl4w4QvH0h7X5.bQuwWja1wkvNu8yOmdpStep7SDT2T/y', 'sales'),
+('Bob Sales', 'bob@example.com', '$2b$10$zZp312mqbl4w4QvH0h7X5.bQuwWja1wkvNu8yOmdpStep7SDT2T/y', 'sales'),
+('Charlie Production', 'charlie@example.com', '$2b$10$zZp312mqbl4w4QvH0h7X5.bQuwWja1wkvNu8yOmdpStep7SDT2T/y', 'production'),
+('Diana Director', 'diana@example.com', '$2b$10$zZp312mqbl4w4QvH0h7X5.bQuwWja1wkvNu8yOmdpStep7SDT2T/y', 'director')
+ON CONFLICT (email) DO UPDATE SET
+    password_hash = EXCLUDED.password_hash,
+    name = EXCLUDED.name,
+    role = EXCLUDED.role;
 
 -- Seed settings (single row)
 -- Monthly targets distributed across Jul-Jun (900 total)
