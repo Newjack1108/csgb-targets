@@ -1,0 +1,23 @@
+<header>
+    <div class="container">
+        <h1>CSGB Targets</h1>
+        <% if (typeof user !== 'undefined' && user) { %>
+            <nav>
+                <span class="user-info"><%= user.name %> (<%= user.role %>)</span>
+                <% if (user.role === 'sales' || user.role === 'director') { %>
+                    <a href="/sales/dashboard">Sales Dashboard</a>
+                <% } %>
+                <% if (user.role === 'production' || user.role === 'director') { %>
+                    <a href="/production/dashboard">Production Dashboard</a>
+                <% } %>
+                <% if (user.role === 'director') { %>
+                    <a href="/settings">Settings</a>
+                    <a href="/users">Users</a>
+                <% } %>
+                <form method="POST" action="/logout" style="display: inline;">
+                    <button type="submit" class="btn-link">Logout</button>
+                </form>
+            </nav>
+        <% } %>
+    </div>
+</header>

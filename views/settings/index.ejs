@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - CSGB Targets</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <main class="container">
+        <h2>Settings</h2>
+        
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-error"><%= error %></div>
+        <% } %>
+        
+        <form method="POST" action="/settings">
+            <div class="form-group">
+                <label for="baseline_floor_per_box">Baseline Floor per Box (£)</label>
+                <input type="number" id="baseline_floor_per_box" name="baseline_floor_per_box" 
+                       step="0.01" value="<%= settings.baseline_floor_per_box %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="yearly_box_target">Yearly Box Target</label>
+                <input type="number" id="yearly_box_target" name="yearly_box_target" 
+                       value="<%= settings.yearly_box_target %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="rag_amber_floor_pct">RAG Amber Floor Percentage</label>
+                <input type="number" id="rag_amber_floor_pct" name="rag_amber_floor_pct" 
+                       step="0.01" min="0" max="1" value="<%= settings.rag_amber_floor_pct %>" required>
+                <small>e.g. 0.90 for 90%</small>
+            </div>
+
+            <div class="form-group">
+                <label for="install_capacity_high_season_per_week">Install Capacity (High Season per Week)</label>
+                <input type="number" id="install_capacity_high_season_per_week" 
+                       name="install_capacity_high_season_per_week" 
+                       value="<%= settings.install_capacity_high_season_per_week %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="fy_start_month">Financial Year Start Month</label>
+                <input type="number" id="fy_start_month" name="fy_start_month" 
+                       min="1" max="12" value="<%= settings.fy_start_month %>" required>
+                <small>7 for July</small>
+            </div>
+
+            <h3>Monthly Box Targets (Jul-Jun)</h3>
+            <div class="monthly-targets">
+                <% allMonths.forEach(month => { %>
+                    <div class="form-group">
+                        <label for="month_<%= month %>"><%= month %></label>
+                        <input type="number" id="month_<%= month %>" name="month_<%= month %>" 
+                               value="<%= monthlyTargets[month] || 0 %>" min="0" required>
+                    </div>
+                <% }); %>
+            </div>
+            <div class="form-group">
+                <strong>Total: <span id="monthly-total"><%= Object.values(monthlyTargets).reduce((a, b) => a + (b || 0), 0) %></span></strong>
+                <small>Must equal Yearly Box Target</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Settings</button>
+            </div>
+        </form>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script>
+        const yearlyTarget = parseInt(document.getElementById('yearly_box_target').value);
+        const monthlyInputs = document.querySelectorAll('input[name^="month_"]');
+        
+        function updateTotal() {
+            let total = 0;
+            monthlyInputs.forEach(input => {
+                total += parseInt(input.value) || 0;
+            });
+            document.getElementById('monthly-total').textContent = total;
+            
+            const totalEl = document.getElementById('monthly-total');
+            if (total === yearlyTarget) {
+                totalEl.style.color = 'green';
+            } else {
+                totalEl.style.color = 'red';
+            }
+        }
+        
+        monthlyInputs.forEach(input => {
+            input.addEventListener('input', updateTotal);
+        });
+        
+        document.getElementById('yearly_box_target').addEventListener('input', function() {
+            updateTotal();
+        });
+    </script>
+</body>
+</html>

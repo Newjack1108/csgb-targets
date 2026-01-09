@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Dashboard - CSGB Targets</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <main class="container">
+        <div class="dashboard-header">
+            <h2>Sales Dashboard</h2>
+            <form method="GET" action="/sales/dashboard" class="fy-selector">
+                <select name="fy">
+                    <% allFYs.forEach(fyOption => { %>
+                        <option value="<%= fyOption %>" <%= fy === fyOption ? 'selected' : '' %>><%= fyOption %></option>
+                    <% }); %>
+                </select>
+                <select name="month">
+                    <% allMonths.forEach(monthOption => { %>
+                        <option value="<%= monthOption %>" <%= month === monthOption ? 'selected' : '' %>><%= monthOption %></option>
+                    <% }); %>
+                </select>
+                <button type="submit" class="btn btn-sm">Update</button>
+            </form>
+        </div>
+
+        <!-- SECTION 1: SCOREBOARD -->
+        <section class="dashboard-section">
+            <h3>Scoreboard</h3>
+            <div class="scoreboard">
+                <div class="scorecard">
+                    <div class="scorecard-label">Boxes Sold vs Monthly Target</div>
+                    <div class="scorecard-value">
+                        <span class="rag-indicator rag-<%= boxesRAG %>"></span>
+                        <%= metrics.boxesSold %> / <%= monthlyBoxTarget %>
+                        (<%= ((metrics.boxesSold / monthlyBoxTarget) * 100).toFixed(1) %>%)
+                    </div>
+                </div>
+                <div class="scorecard">
+                    <div class="scorecard-label">Baseline Contribution vs Target</div>
+                    <div class="scorecard-value">
+                        <span class="rag-indicator rag-<%= baselineRAG %>"></span>
+                        £<%= metrics.baselineActual.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %> / 
+                        £<%= metrics.baselineTarget.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                        (<%= ((metrics.baselineActual / metrics.baselineTarget) * 100).toFixed(1) %>%)
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: DISCOUNT IMPACT -->
+        <section class="dashboard-section">
+            <h3>Discount Impact</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-label">Discount Given (MTD)</div>
+                    <div class="metric-value">£<%= metrics.discountImpactTotal.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Baseline Contribution Lost</div>
+                    <div class="metric-value">£<%= metrics.discountImpactTotal.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Equivalent Boxes Lost</div>
+                    <div class="metric-value">
+                        <span class="rag-indicator rag-<%= discountRAG %>"></span>
+                        <%= metrics.discountBoxesLostTotal.toFixed(2) %>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: OBSERVED SALES MIX -->
+        <section class="dashboard-section">
+            <h3>Observed Sales Mix</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-label">Box</div>
+                    <div class="metric-value">
+                        £<%= metrics.observedMix.boxRevenue.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                        (<%= metrics.observedMix.boxMixPct.toFixed(1) %>%)
+                    </div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Install</div>
+                    <div class="metric-value">
+                        £<%= metrics.observedMix.installRevenue.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                        (<%= metrics.observedMix.installMixPct.toFixed(1) %>%)
+                    </div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Extras</div>
+                    <div class="metric-value">
+                        £<%= metrics.observedMix.extrasRevenue.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                        (<%= metrics.observedMix.extrasMixPct.toFixed(1) %>%)
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: SHAPE & MOMENTUM -->
+        <section class="dashboard-section">
+            <h3>Shape & Momentum</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-label">Orders Count</div>
+                    <div class="metric-value"><%= metrics.shapeMetrics.ordersCount %></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Avg Boxes/Order</div>
+                    <div class="metric-value"><%= metrics.shapeMetrics.avgBoxesPerOrder.toFixed(2) %></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Avg £ per Box (Baseline)</div>
+                    <div class="metric-value">£<%= metrics.shapeMetrics.avgBaselinePerBox.toFixed(2) %></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Rolling 4-Week Boxes/Week</div>
+                    <div class="metric-value"><%= metrics.shapeMetrics.rolling4WeekBoxesPerWeek.toFixed(1) %></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: INSTALL LOAD -->
+        <section class="dashboard-section">
+            <h3>Install Load</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-label">Installed Boxes MTD</div>
+                    <div class="metric-value">N/A</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Installs/Week (Last 4)</div>
+                    <div class="metric-value">N/A</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Capacity Reference</div>
+                    <div class="metric-value"><%= settings.install_capacity_high_season_per_week %> boxes/week</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: COMMENTARY -->
+        <section class="dashboard-section">
+            <h3>Commentary</h3>
+            <form method="POST" action="/sales/dashboard/note">
+                <input type="hidden" name="fy" value="<%= fy %>">
+                <input type="hidden" name="month" value="<%= month %>">
+                <textarea name="note" rows="3" style="width: 100%;"><%= dashboardNote %></textarea>
+                <button type="submit" class="btn btn-primary">Save Note</button>
+            </form>
+        </section>
+
+        <!-- ORDERS LIST -->
+        <section class="dashboard-section">
+            <h3>Orders</h3>
+            <a href="/sales/orders/new" class="btn btn-primary">New Order</a>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Ref</th>
+                        <% if (isDirector) { %><th>Sales Rep</th><% } %>
+                        <th>Boxes</th>
+                        <th>Net Total</th>
+                        <th>Baseline</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% orders.forEach(order => { %>
+                        <tr>
+                            <td><%= new Date(order.order_date).toLocaleDateString('en-GB') %></td>
+                            <td><%= order.order_ref || '-' %></td>
+                            <% if (isDirector) { %><td><%= order.sales_rep_name || '-' %></td><% } %>
+                            <td><%= order.boxes_qty %></td>
+                            <td>£<%= parseFloat(order.box_net_total).toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+                            <td>£<%= (parseFloat(order.box_net_total) - parseFloat(order.box_build_cost_total)).toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+                            <td>
+                                <a href="/sales/orders/<%= order.id %>/edit" class="btn btn-sm">Edit</a>
+                                <form method="POST" action="/sales/orders/<%= order.id %>/duplicate" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm">Duplicate</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                    <% if (orders.length === 0) { %>
+                        <tr><td colspan="<%= isDirector ? 7 : 6 %>">No orders found</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Dashboard - CSGB Targets</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <main class="container">
+        <div class="dashboard-header">
+            <h2>Production Dashboard</h2>
+            <form method="GET" action="/production/dashboard" class="fy-selector">
+                <select name="fy">
+                    <% allFYs.forEach(fyOption => { %>
+                        <option value="<%= fyOption %>" <%= fy === fyOption ? 'selected' : '' %>><%= fyOption %></option>
+                    <% }); %>
+                </select>
+                <select name="month">
+                    <% allMonths.forEach(monthOption => { %>
+                        <option value="<%= monthOption %>" <%= month === monthOption ? 'selected' : '' %>><%= monthOption %></option>
+                    <% }); %>
+                </select>
+                <button type="submit" class="btn btn-sm">Update</button>
+            </form>
+        </div>
+
+        <!-- SECTION 1: SCOREBOARD -->
+        <section class="dashboard-section">
+            <h3>Scoreboard</h3>
+            <div class="scoreboard">
+                <div class="scorecard">
+                    <div class="scorecard-label">Boxes Built vs Plan</div>
+                    <div class="scorecard-value">
+                        <span class="rag-indicator rag-<%= boxesRAG %>"></span>
+                        <%= metrics.boxesBuilt %> / <%= monthlyBoxTarget %>
+                        (<%= ((metrics.boxesBuilt / monthlyBoxTarget) * 100).toFixed(1) %>%)
+                    </div>
+                </div>
+                <div class="scorecard">
+                    <div class="scorecard-label">Cost Compliance %</div>
+                    <div class="scorecard-value">
+                        <span class="rag-indicator rag-<%= costComplianceRAG %>"></span>
+                        <%= metrics.costCompliancePct.toFixed(1) %>%
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: COST LEAKAGE -->
+        <section class="dashboard-section">
+            <h3>Cost Leakage</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-label">Boxes Over Cost</div>
+                    <div class="metric-value"><%= metrics.costLeakage.boxesOverCost %></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Top Reasons</div>
+                    <div class="metric-value">
+                        <% if (metrics.costLeakage.reasons && metrics.costLeakage.reasons.length > 0) { %>
+                            <ul>
+                                <% metrics.costLeakage.reasons.forEach(reason => { %>
+                                    <li><%= reason.reason %>: <%= reason.boxes %> boxes</li>
+                                <% }); %>
+                            </ul>
+                        <% } else { %>
+                            None
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: FLOW & CAPACITY -->
+        <section class="dashboard-section">
+            <h3>Flow & Capacity</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-label">Boxes Built MTD</div>
+                    <div class="metric-value"><%= metrics.flowMetrics.boxesBuilt %></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Rolling 4-Week Avg</div>
+                    <div class="metric-value"><%= metrics.flowMetrics.rolling4WeekAvg.toFixed(1) %></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Install Load vs Capacity</div>
+                    <div class="metric-value">
+                        <%= metrics.flowMetrics.installLoad.installsPerWeek.toFixed(1) %> / 
+                        <%= metrics.flowMetrics.installLoad.capacity %> boxes/week
+                    </div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Backlog</div>
+                    <div class="metric-value"><%= metrics.flowMetrics.backlog %></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: QUALITY -->
+        <section class="dashboard-section">
+            <h3>Quality</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-label">Rework/Snags Rate</div>
+                    <div class="metric-value">
+                        <span class="rag-indicator rag-<%= qualityRAG %>"></span>
+                        <%= metrics.qualityMetrics.reworkRate.toFixed(1) %>%
+                        (<%= metrics.qualityMetrics.reworkBoxes %> boxes)
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: OBSERVED INSTALL SHAPE -->
+        <section class="dashboard-section">
+            <h3>Observed Install Shape</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-label">% Installed vs Collection</div>
+                    <div class="metric-value"><%= metrics.installShape.installShapePct.toFixed(1) %>%</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: COMMENTARY -->
+        <section class="dashboard-section">
+            <h3>Commentary</h3>
+            <form method="POST" action="/production/dashboard/note">
+                <input type="hidden" name="fy" value="<%= fy %>">
+                <input type="hidden" name="month" value="<%= month %>">
+                <textarea name="note" rows="3" style="width: 100%;"><%= dashboardNote %></textarea>
+                <button type="submit" class="btn btn-primary">Save Note</button>
+            </form>
+        </section>
+
+        <!-- PRODUCTION ENTRIES LIST -->
+        <section class="dashboard-section">
+            <h3>Production Entries</h3>
+            <a href="/production/entries/new" class="btn btn-primary">New Entry</a>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Boxes Built</th>
+                        <th>Over Cost</th>
+                        <th>Rework</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% productionData.forEach(entry => { %>
+                        <tr>
+                            <td><%= new Date(entry.production_date).toLocaleDateString('en-GB') %></td>
+                            <td><%= entry.boxes_built %></td>
+                            <td><%= entry.boxes_over_cost %></td>
+                            <td><%= entry.rework_boxes %></td>
+                            <td>
+                                <a href="/production/entries/<%= entry.id %>/edit" class="btn btn-sm">Edit</a>
+                            </td>
+                        </tr>
+                    <% }); %>
+                    <% if (productionData.length === 0) { %>
+                        <tr><td colspan="5">No production entries found</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>

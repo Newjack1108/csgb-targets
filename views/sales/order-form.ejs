@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= isEdit ? 'Edit Order' : 'New Order' %> - CSGB Targets</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <main class="container">
+        <h2><%= isEdit ? 'Edit Order' : 'New Order' %></h2>
+        
+        <form method="POST" action="<%= isEdit ? `/sales/orders/${order.id}/edit` : '/sales/orders/new' %>" id="orderForm">
+            <div class="form-group">
+                <label for="order_date">Order Date *</label>
+                <input type="date" id="order_date" name="order_date" 
+                       value="<%= order ? order.order_date : new Date().toISOString().split('T')[0] %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="order_ref">Order Reference</label>
+                <input type="text" id="order_ref" name="order_ref" 
+                       value="<%= order ? order.order_ref : '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="boxes_qty">Boxes Quantity *</label>
+                <input type="number" id="boxes_qty" name="boxes_qty" min="1" 
+                       value="<%= order ? order.boxes_qty : '' %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="box_rrp_total">Box RRP Total (£) *</label>
+                <input type="number" id="box_rrp_total" name="box_rrp_total" step="0.01" 
+                       value="<%= order ? order.box_rrp_total : '' %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="box_net_total">Box Net Total (£) *</label>
+                <input type="number" id="box_net_total" name="box_net_total" step="0.01" 
+                       value="<%= order ? order.box_net_total : '' %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="box_build_cost_total">Box Build Cost Total (£) *</label>
+                <input type="number" id="box_build_cost_total" name="box_build_cost_total" step="0.01" 
+                       value="<%= order ? order.box_build_cost_total : '' %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="install_revenue">Install Revenue (£)</label>
+                <input type="number" id="install_revenue" name="install_revenue" step="0.01" 
+                       value="<%= order ? order.install_revenue : '0' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="extras_revenue">Extras Revenue (£)</label>
+                <input type="number" id="extras_revenue" name="extras_revenue" step="0.01" 
+                       value="<%= order ? order.extras_revenue : '0' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea id="notes" name="notes" rows="3"><%= order ? order.notes : '' %></textarea>
+            </div>
+
+            <!-- Auto-calculated fields (read-only) -->
+            <div class="calc-section">
+                <h3>Calculated Values</h3>
+                <div class="calc-display">
+                    <div>
+                        <strong>Discount:</strong> 
+                        <span id="discount">£0.00</span>
+                    </div>
+                    <div>
+                        <strong>Baseline Contribution:</strong> 
+                        <span id="baseline">£0.00</span>
+                    </div>
+                    <div>
+                        <strong>Contribution per Box:</strong> 
+                        <span id="contribution_per_box">£0.00</span>
+                        <span id="contribution_badge" class="badge"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="/sales/dashboard" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script>
+        const baselineFloor = <%= settings.baseline_floor_per_box %>;
+        
+        function calculate() {
+            const rrp = parseFloat(document.getElementById('box_rrp_total').value) || 0;
+            const net = parseFloat(document.getElementById('box_net_total').value) || 0;
+            const cost = parseFloat(document.getElementById('box_build_cost_total').value) || 0;
+            const qty = parseInt(document.getElementById('boxes_qty').value) || 1;
+            
+            const discount = rrp - net;
+            const baseline = net - cost;
+            const contributionPerBox = qty > 0 ? baseline / qty : 0;
+            
+            document.getElementById('discount').textContent = '£' + discount.toFixed(2);
+            document.getElementById('baseline').textContent = '£' + baseline.toFixed(2);
+            document.getElementById('contribution_per_box').textContent = '£' + contributionPerBox.toFixed(2);
+            
+            // RAG badge for contribution per box
+            const badge = document.getElementById('contribution_badge');
+            if (contributionPerBox >= baselineFloor) {
+                badge.textContent = '✓';
+                badge.className = 'badge rag-green';
+            } else if (contributionPerBox >= baselineFloor * 0.90) {
+                badge.textContent = '⚠';
+                badge.className = 'badge rag-amber';
+            } else {
+                badge.textContent = '✗';
+                badge.className = 'badge rag-red';
+            }
+        }
+        
+        ['box_rrp_total', 'box_net_total', 'box_build_cost_total', 'boxes_qty'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calculate);
+        });
+        
+        // Calculate on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', calculate);
+        } else {
+            calculate();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= isEdit ? 'Edit Production Entry' : 'New Production Entry' %> - CSGB Targets</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <main class="container">
+        <h2><%= isEdit ? 'Edit Production Entry' : 'New Production Entry' %></h2>
+        
+        <form method="POST" action="<%= isEdit ? `/production/entries/${entry.id}/edit` : '/production/entries/new' %>">
+            <div class="form-group">
+                <label for="production_date">Production Date *</label>
+                <input type="date" id="production_date" name="production_date" 
+                       value="<%= entry ? entry.production_date : new Date().toISOString().split('T')[0] %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="boxes_built">Boxes Built *</label>
+                <input type="number" id="boxes_built" name="boxes_built" min="0" 
+                       value="<%= entry ? entry.boxes_built : '' %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="boxes_over_cost">Boxes Over Cost</label>
+                <input type="number" id="boxes_over_cost" name="boxes_over_cost" min="0" 
+                       value="<%= entry ? entry.boxes_over_cost : '0' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="over_cost_reasons_json">Over Cost Reasons (JSON)</label>
+                <textarea id="over_cost_reasons_json" name="over_cost_reasons_json" rows="5">
+<%= entry && entry.over_cost_reasons_json ? JSON.stringify(entry.over_cost_reasons_json, null, 2) : '[]' %></textarea>
+                <small>Format: [{"reason": "material", "boxes": 1}, {"reason": "rework", "boxes": 2}]</small>
+            </div>
+
+            <div class="form-group">
+                <label for="rework_boxes">Rework Boxes</label>
+                <input type="number" id="rework_boxes" name="rework_boxes" min="0" 
+                       value="<%= entry ? entry.rework_boxes : '0' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea id="notes" name="notes" rows="3"><%= entry ? entry.notes : '' %></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="/production/dashboard" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </main>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>
