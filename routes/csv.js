@@ -102,7 +102,11 @@ router.post('/import/orders', upload.single('csvfile'), async (req, res) => {
                     }
                 }
 
-                // Check if order ID exists (for update vs insert)
+                // Update/Insert Logic:
+                // - If CSV row has 'id' column with valid ID: Updates existing record (works for ANY FY/month)
+                // - If CSV row has no 'id' or empty: Creates new record
+                // Note: Updates work across all financial years/months - dashboard view selection has no effect
+                // The system uses primary key (id) only for lookups, not date-based filtering
                 const orderId = row.id ? parseInt(row.id) : null;
                 
                 if (orderId && orderId > 0) {
@@ -254,7 +258,11 @@ router.post('/import/production', upload.single('csvfile'), async (req, res) => 
                     }
                 }
 
-                // Check if production entry ID exists (for update vs insert)
+                // Update/Insert Logic:
+                // - If CSV row has 'id' column with valid ID: Updates existing entry (works for ANY FY/month)
+                // - If CSV row has no 'id' or empty: Creates new entry
+                // Note: Updates work across all financial years/months - dashboard view selection has no effect
+                // The system uses primary key (id) only for lookups, not date-based filtering
                 const entryId = row.id ? parseInt(row.id) : null;
                 
                 if (entryId && entryId > 0) {
@@ -339,9 +347,11 @@ router.post('/import/production', upload.single('csvfile'), async (req, res) => 
 
 /**
  * GET /csv/export/orders - Export all orders as CSV
+ * Exports ALL orders from ALL financial years/months - no date filtering applied
  */
 router.get('/export/orders', async (req, res) => {
     try {
+        // Export all orders regardless of financial year or month
         const ordersResult = await db.query(
             `SELECT o.*, u.email as sales_rep_email, u.name as sales_rep_name
              FROM orders o
@@ -382,9 +392,11 @@ router.get('/export/orders', async (req, res) => {
 
 /**
  * GET /csv/export/production - Export all production entries as CSV
+ * Exports ALL production entries from ALL financial years/months - no date filtering applied
  */
 router.get('/export/production', async (req, res) => {
     try {
+        // Export all production entries regardless of financial year or month
         const productionResult = await db.query(
             'SELECT * FROM production_boxes ORDER BY production_date DESC, created_at DESC'
         );
