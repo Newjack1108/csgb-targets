@@ -102,28 +102,73 @@ router.post('/import/orders', upload.single('csvfile'), async (req, res) => {
                     }
                 }
 
-                // Insert order
-                await db.query(
-                    `INSERT INTO orders (
-                        order_date, order_ref, sales_rep_id, boxes_qty,
-                        box_rrp_total, box_net_total, box_build_cost_total,
-                        install_revenue, extras_revenue, notes
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-                    [
-                        row.order_date,
-                        row.order_ref || null,
-                        salesRepId,
-                        parseInt(row.boxes_qty),
-                        parseFloat(row.box_rrp_total),
-                        parseFloat(row.box_net_total),
-                        parseFloat(row.box_build_cost_total),
-                        parseFloat(row.install_revenue) || 0,
-                        parseFloat(row.extras_revenue) || 0,
-                        row.notes || null
-                    ]
-                );
-
-                results.success++;
+                // Check if order ID exists (for update vs insert)
+                const orderId = row.id ? parseInt(row.id) : null;
+                
+                if (orderId && orderId > 0) {
+                    // Check if order exists
+                    const existingOrder = await db.query(
+                        'SELECT id FROM orders WHERE id = $1',
+                        [orderId]
+                    );
+                    
+                    if (existingOrder.rows.length > 0) {
+                        // Update existing order
+                        await db.query(
+                            `UPDATE orders SET
+                                order_date = $1,
+                                order_ref = $2,
+                                sales_rep_id = $3,
+                                boxes_qty = $4,
+                                box_rrp_total = $5,
+                                box_net_total = $6,
+                                box_build_cost_total = $7,
+                                install_revenue = $8,
+                                extras_revenue = $9,
+                                notes = $10,
+                                updated_at = CURRENT_TIMESTAMP
+                             WHERE id = $11`,
+                            [
+                                row.order_date,
+                                row.order_ref || null,
+                                salesRepId,
+                                parseInt(row.boxes_qty),
+                                parseFloat(row.box_rrp_total),
+                                parseFloat(row.box_net_total),
+                                parseFloat(row.box_build_cost_total),
+                                parseFloat(row.install_revenue) || 0,
+                                parseFloat(row.extras_revenue) || 0,
+                                row.notes || null,
+                                orderId
+                            ]
+                        );
+                        results.success++;
+                    } else {
+                        throw new Error(`Row ${rowNum}: Order ID ${orderId} not found`);
+                    }
+                } else {
+                    // Insert new order
+                    await db.query(
+                        `INSERT INTO orders (
+                            order_date, order_ref, sales_rep_id, boxes_qty,
+                            box_rrp_total, box_net_total, box_build_cost_total,
+                            install_revenue, extras_revenue, notes
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                        [
+                            row.order_date,
+                            row.order_ref || null,
+                            salesRepId,
+                            parseInt(row.boxes_qty),
+                            parseFloat(row.box_rrp_total),
+                            parseFloat(row.box_net_total),
+                            parseFloat(row.box_build_cost_total),
+                            parseFloat(row.install_revenue) || 0,
+                            parseFloat(row.extras_revenue) || 0,
+                            row.notes || null
+                        ]
+                    );
+                    results.success++;
+                }
             } catch (error) {
                 results.failed++;
                 results.errors.push(`Row ${rowNum}: ${error.message}`);
@@ -209,23 +254,59 @@ router.post('/import/production', upload.single('csvfile'), async (req, res) => 
                     }
                 }
 
-                // Insert production entry
-                await db.query(
-                    `INSERT INTO production_boxes (
-                        production_date, boxes_built, boxes_over_cost,
-                        over_cost_reasons_json, rework_boxes, notes
-                    ) VALUES ($1, $2, $3, $4, $5, $6)`,
-                    [
-                        row.production_date,
-                        parseInt(row.boxes_built),
-                        parseInt(row.boxes_over_cost) || 0,
-                        reasonsJson ? JSON.stringify(reasonsJson) : null,
-                        parseInt(row.rework_boxes) || 0,
-                        row.notes || null
-                    ]
-                );
-
-                results.success++;
+                // Check if production entry ID exists (for update vs insert)
+                const entryId = row.id ? parseInt(row.id) : null;
+                
+                if (entryId && entryId > 0) {
+                    // Check if entry exists
+                    const existingEntry = await db.query(
+                        'SELECT id FROM production_boxes WHERE id = $1',
+                        [entryId]
+                    );
+                    
+                    if (existingEntry.rows.length > 0) {
+                        // Update existing entry
+                        await db.query(
+                            `UPDATE production_boxes SET
+                                production_date = $1,
+                                boxes_built = $2,
+                                boxes_over_cost = $3,
+                                over_cost_reasons_json = $4,
+                                rework_boxes = $5,
+                                notes = $6
+                             WHERE id = $7`,
+                            [
+                                row.production_date,
+                                parseInt(row.boxes_built),
+                                parseInt(row.boxes_over_cost) || 0,
+                                reasonsJson ? JSON.stringify(reasonsJson) : null,
+                                parseInt(row.rework_boxes) || 0,
+                                row.notes || null,
+                                entryId
+                            ]
+                        );
+                        results.success++;
+                    } else {
+                        throw new Error(`Row ${rowNum}: Production entry ID ${entryId} not found`);
+                    }
+                } else {
+                    // Insert new production entry
+                    await db.query(
+                        `INSERT INTO production_boxes (
+                            production_date, boxes_built, boxes_over_cost,
+                            over_cost_reasons_json, rework_boxes, notes
+                        ) VALUES ($1, $2, $3, $4, $5, $6)`,
+                        [
+                            row.production_date,
+                            parseInt(row.boxes_built),
+                            parseInt(row.boxes_over_cost) || 0,
+                            reasonsJson ? JSON.stringify(reasonsJson) : null,
+                            parseInt(row.rework_boxes) || 0,
+                            row.notes || null
+                        ]
+                    );
+                    results.success++;
+                }
             } catch (error) {
                 results.failed++;
                 results.errors.push(`Row ${rowNum}: ${error.message}`);
