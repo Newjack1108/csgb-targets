@@ -74,10 +74,21 @@
     <%- include('../partials/footer') %>
 
     <script>
-        const yearlyTarget = parseInt(document.getElementById('yearly_box_target').value);
+        const yearlyTargetInput = document.getElementById('yearly_box_target');
         const monthlyInputs = document.querySelectorAll('input[name^="month_"]');
         
+        // Capture initial state
+        let initialYearlyTarget = parseInt(yearlyTargetInput.value) || 0;
+        const initialMonthlyValues = {};
+        const manuallyEditedMonths = new Set();
+        
+        monthlyInputs.forEach(input => {
+            const month = input.name.replace('month_', '');
+            initialMonthlyValues[month] = parseInt(input.value) || 0;
+        });
+        
         function updateTotal() {
+            const currentYearlyTarget = parseInt(yearlyTargetInput.value) || 0;
             let total = 0;
             monthlyInputs.forEach(input => {
                 total += parseInt(input.value) || 0;
@@ -85,20 +96,56 @@
             document.getElementById('monthly-total').textContent = total;
             
             const totalEl = document.getElementById('monthly-total');
-            if (total === yearlyTarget) {
+            if (total === currentYearlyTarget) {
                 totalEl.style.color = 'green';
             } else {
                 totalEl.style.color = 'red';
             }
         }
         
-        monthlyInputs.forEach(input => {
-            input.addEventListener('input', updateTotal);
-        });
-        
-        document.getElementById('yearly_box_target').addEventListener('input', function() {
+        // Auto-adjust monthly targets when yearly target changes
+        yearlyTargetInput.addEventListener('input', function() {
+            const newYearlyTarget = parseInt(this.value) || 0;
+            
+            // Handle edge case: if yearly target is 0, set all months to 0
+            if (newYearlyTarget === 0) {
+                monthlyInputs.forEach(input => {
+                    if (!manuallyEditedMonths.has(input.name)) {
+                        input.value = '0';
+                    }
+                });
+                updateTotal();
+                return;
+            }
+            
+            // Calculate scaling ratio
+            const ratio = initialYearlyTarget > 0 ? newYearlyTarget / initialYearlyTarget : 0;
+            
+            // Apply ratio to each month (only if not manually edited)
+            monthlyInputs.forEach(input => {
+                const month = input.name.replace('month_', '');
+                if (!manuallyEditedMonths.has(input.name)) {
+                    const newValue = Math.round(initialMonthlyValues[month] * ratio);
+                    input.value = Math.max(0, newValue); // Ensure non-negative
+                }
+            });
+            
             updateTotal();
         });
+        
+        // Track manual edits to monthly inputs
+        monthlyInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                manuallyEditedMonths.add(this.name);
+                updateTotal();
+            });
+        });
+        
+        // Update total when yearly target changes (for validation display)
+        yearlyTargetInput.addEventListener('input', updateTotal);
+        
+        // Initial total update
+        updateTotal();
     </script>
 </body>
 </html>
