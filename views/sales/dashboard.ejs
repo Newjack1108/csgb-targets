@@ -60,8 +60,8 @@
                     <div class="metric-value">£<%= metrics.discountImpactTotal.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></div>
                 </div>
                 <div class="metric">
-                    <div class="metric-label">Baseline Contribution Lost</div>
-                    <div class="metric-value">£<%= metrics.discountImpactTotal.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></div>
+                    <div class="metric-label">Average Discount %</div>
+                    <div class="metric-value"><%= metrics.averageDiscountPct.toFixed(1) %>%</div>
                 </div>
                 <div class="metric">
                     <div class="metric-label">Equivalent Boxes Lost</div>

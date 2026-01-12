@@ -47,6 +47,16 @@ function aggregateSalesMetrics(orders, settings, fyLabel, fyMonth) {
         ? discountImpactTotal / baselineFloorPerBox
         : 0;
     
+    // Calculate total RRP for discount percentage
+    const totalRrp = monthOrders.reduce((sum, order) => 
+        sum + (parseFloat(order.box_rrp_total) || 0), 0
+    );
+    
+    // Average discount percentage
+    const averageDiscountPct = totalRrp > 0 
+        ? (discountImpactTotal / totalRrp) * 100 
+        : 0;
+    
     // Observed sales mix
     const totalSalesValue = monthOrders.reduce((sum, order) => {
         const net = parseFloat(order.box_net_total) || 0;
@@ -84,6 +94,7 @@ function aggregateSalesMetrics(orders, settings, fyLabel, fyMonth) {
         boxesSold,
         baselineActual,
         baselineTarget,
+        averageDiscountPct,
         discountImpactTotal,
         discountBoxesLostTotal,
         observedMix: {
