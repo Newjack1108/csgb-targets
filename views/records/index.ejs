@@ -42,7 +42,7 @@
                 <tbody>
                     <% orders.forEach(order => { %>
                         <tr>
-                            <td><%= new Date(order.order_date).toLocaleDateString('en-GB') %></td>
+                            <td><%= formatDate(order.order_date) %></td>
                             <td><%= order.order_ref || '-' %></td>
                             <td><%= order.sales_rep_name || order.sales_rep_email || '-' %></td>
                             <td><%= order.boxes_qty %></td>
@@ -88,7 +88,7 @@
                 <tbody>
                     <% productionEntries.forEach(entry => { %>
                         <tr>
-                            <td><%= new Date(entry.production_date).toLocaleDateString('en-GB') %></td>
+                            <td><%= formatDate(entry.production_date) %></td>
                             <td><%= entry.boxes_built %></td>
                             <td><%= entry.boxes_over_cost %></td>
                             <td><%= entry.rework_boxes %></td>

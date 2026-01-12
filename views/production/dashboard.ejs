@@ -154,7 +154,7 @@
                 <tbody>
                     <% productionData.forEach(entry => { %>
                         <tr>
-                            <td><%= new Date(entry.production_date).toLocaleDateString('en-GB') %></td>
+                            <td><%= formatDate(entry.production_date) %></td>
                             <td><%= entry.boxes_built %></td>
                             <td><%= entry.boxes_over_cost %></td>
                             <td><%= entry.rework_boxes %></td>

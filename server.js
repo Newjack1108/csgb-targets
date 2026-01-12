@@ -51,6 +51,17 @@ app.use(session({
 // Make user available to all views
 app.use(userLocals);
 
+// Date formatting helper for EJS templates (DD/MM/YYYY)
+app.locals.formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+};
+
 // Routes
 app.use('/', require('./routes/auth'));
 app.use('/admin', require('./routes/admin')); // Temporary admin routes for setup

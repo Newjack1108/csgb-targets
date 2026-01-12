@@ -173,7 +173,7 @@
                 <tbody>
                     <% orders.forEach(order => { %>
                         <tr>
-                            <td><%= new Date(order.order_date).toLocaleDateString('en-GB') %></td>
+                            <td><%= formatDate(order.order_date) %></td>
                             <td><%= order.order_ref || '-' %></td>
                             <% if (isDirector) { %><td><%= order.sales_rep_name || '-' %></td><% } %>
                             <td><%= order.boxes_qty %></td>
