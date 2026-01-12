@@ -58,6 +58,7 @@ app.use('/sales', require('./routes/sales'));
 app.use('/production', require('./routes/production'));
 app.use('/settings', require('./routes/settings'));
 app.use('/users', require('./routes/users'));
+app.use('/records', require('./routes/records'));
 app.use('/csv', require('./routes/csv'));
 
 // Root redirect

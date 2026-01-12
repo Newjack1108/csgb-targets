@@ -317,6 +317,33 @@ router.post('/orders/:id/edit', async (req, res) => {
 });
 
 /**
+ * POST /sales/orders/:id/delete - Delete order (director only)
+ */
+router.post('/orders/:id/delete', requireRole('director'), async (req, res) => {
+    try {
+        const orderId = parseInt(req.params.id);
+        
+        // Check if order exists
+        const orderCheck = await db.query(
+            'SELECT id FROM orders WHERE id = $1',
+            [orderId]
+        );
+        
+        if (orderCheck.rows.length === 0) {
+            return res.redirect('/sales/dashboard?error=Order not found');
+        }
+        
+        // Delete order
+        await db.query('DELETE FROM orders WHERE id = $1', [orderId]);
+        
+        res.redirect('/sales/dashboard?success=Order deleted successfully');
+    } catch (error) {
+        console.error('Delete order error:', error);
+        res.redirect('/sales/dashboard?error=Error deleting order');
+    }
+});
+
+/**
  * POST /sales/orders/:id/duplicate - Duplicate order
  */
 router.post('/orders/:id/duplicate', async (req, res) => {

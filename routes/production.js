@@ -212,6 +212,33 @@ router.get('/entries/:id/edit', async (req, res) => {
 });
 
 /**
+ * POST /production/entries/:id/delete - Delete production entry (director only)
+ */
+router.post('/entries/:id/delete', requireRole('director'), async (req, res) => {
+    try {
+        const entryId = parseInt(req.params.id);
+        
+        // Check if entry exists
+        const entryCheck = await db.query(
+            'SELECT id FROM production_boxes WHERE id = $1',
+            [entryId]
+        );
+        
+        if (entryCheck.rows.length === 0) {
+            return res.redirect('/production/dashboard?error=Production entry not found');
+        }
+        
+        // Delete production entry
+        await db.query('DELETE FROM production_boxes WHERE id = $1', [entryId]);
+        
+        res.redirect('/production/dashboard?success=Production entry deleted successfully');
+    } catch (error) {
+        console.error('Delete production entry error:', error);
+        res.redirect('/production/dashboard?error=Error deleting production entry');
+    }
+});
+
+/**
  * POST /production/entries/:id/edit - Update production entry
  */
 router.post('/entries/:id/edit', async (req, res) => {

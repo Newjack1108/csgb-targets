@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Records Management - CSGB Targets</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <main class="container">
+        <h2>Records Management</h2>
+        
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-error"><%= error %></div>
+        <% } %>
+        
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success"><%= success %></div>
+        <% } %>
+
+        <!-- Orders Section -->
+        <section class="dashboard-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>Orders</h3>
+                <a href="/sales/orders/new" class="btn btn-primary">New Order</a>
+            </div>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Ref</th>
+                        <th>Sales Rep</th>
+                        <th>Boxes</th>
+                        <th>Net Total</th>
+                        <th>Baseline</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% orders.forEach(order => { %>
+                        <tr>
+                            <td><%= new Date(order.order_date).toLocaleDateString('en-GB') %></td>
+                            <td><%= order.order_ref || '-' %></td>
+                            <td><%= order.sales_rep_name || order.sales_rep_email || '-' %></td>
+                            <td><%= order.boxes_qty %></td>
+                            <td>£<%= parseFloat(order.box_net_total).toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+                            <td>£<%= (parseFloat(order.box_net_total) - parseFloat(order.box_build_cost_total)).toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+                            <td>
+                                <a href="/sales/orders/<%= order.id %>/edit" class="btn btn-sm">Edit</a>
+                                <form method="POST" action="/records/orders/<%= order.id %>/delete" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" 
+                                            onclick="return confirm('Are you sure you want to delete this order? This action cannot be undone.')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                    <% if (orders.length === 0) { %>
+                        <tr><td colspan="7">No orders found</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+            <% if (orders.length >= 1000) { %>
+                <p style="margin-top: 1rem; color: #7f8c8d; font-size: 0.9rem;">Showing first 1000 orders. Use dashboard filters for specific periods.</p>
+            <% } %>
+        </section>
+
+        <!-- Production Entries Section -->
+        <section class="dashboard-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>Production Entries</h3>
+                <a href="/production/entries/new" class="btn btn-primary">New Entry</a>
+            </div>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Boxes Built</th>
+                        <th>Over Cost</th>
+                        <th>Rework</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% productionEntries.forEach(entry => { %>
+                        <tr>
+                            <td><%= new Date(entry.production_date).toLocaleDateString('en-GB') %></td>
+                            <td><%= entry.boxes_built %></td>
+                            <td><%= entry.boxes_over_cost %></td>
+                            <td><%= entry.rework_boxes %></td>
+                            <td><%= entry.notes ? (entry.notes.length > 50 ? entry.notes.substring(0, 50) + '...' : entry.notes) : '-' %></td>
+                            <td>
+                                <a href="/production/entries/<%= entry.id %>/edit" class="btn btn-sm">Edit</a>
+                                <form method="POST" action="/records/production/<%= entry.id %>/delete" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" 
+                                            onclick="return confirm('Are you sure you want to delete this production entry? This action cannot be undone.')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                    <% if (productionEntries.length === 0) { %>
+                        <tr><td colspan="6">No production entries found</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+            <% if (productionEntries.length >= 1000) { %>
+                <p style="margin-top: 1rem; color: #7f8c8d; font-size: 0.9rem;">Showing first 1000 entries. Use dashboard filters for specific periods.</p>
+            <% } %>
+        </section>
+    </main>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>
