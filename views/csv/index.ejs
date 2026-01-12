@@ -78,13 +78,15 @@
                         <li><code>sales_rep_email</code> - Sales rep email address</li>
                         <li><code>boxes_qty</code> - Number of boxes (integer)</li>
                         <li><code>box_rrp_total</code> - Total RRP (£)</li>
-                        <li><code>box_net_total</code> - Total net price (£)</li>
+                        <li><code>discount</code> - Discount given (£, optional - if provided, system calculates box_net_total)</li>
+                        <li><code>box_net_total</code> - Total net price (£, optional - if discount is provided, this will be calculated automatically)</li>
                         <li><code>box_build_cost_total</code> - Total build cost (£)</li>
                         <li><code>install_revenue</code> - Install revenue (£, optional, default: 0)</li>
                         <li><code>extras_revenue</code> - Extras revenue (£, optional, default: 0)</li>
                         <li><code>notes</code> - Notes (optional)</li>
                     </ul>
                     <p><strong>Note:</strong> Include the <code>id</code> column to update existing orders. Leave it blank or omit it to create new orders.</p>
+                    <p><strong>Note:</strong> You can provide either <code>discount</code> or <code>box_net_total</code>. If you provide <code>discount</code>, the system will automatically calculate <code>box_net_total = box_rrp_total - discount</code>. If both are provided, <code>discount</code> takes precedence.</p>
                 </div>
             </section>
 

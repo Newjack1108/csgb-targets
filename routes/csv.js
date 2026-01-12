@@ -132,10 +132,23 @@ router.post('/import/orders', upload.single('csvfile'), async (req, res) => {
             const rowNum = i + 2; // +2 because CSV has header and 0-indexed
 
             try {
-                // Validate required fields
-                if (!row.order_date || !row.boxes_qty || !row.box_rrp_total || 
-                    !row.box_net_total || !row.box_build_cost_total) {
+                // Validate required fields - accept either box_net_total OR discount
+                if (!row.order_date || !row.boxes_qty || !row.box_rrp_total || !row.box_build_cost_total) {
                     throw new Error(`Row ${rowNum}: Missing required fields`);
+                }
+
+                // Calculate box_net_total from discount if provided, otherwise use box_net_total directly
+                let boxNetTotal;
+                if (row.discount !== undefined && row.discount !== null && row.discount !== '') {
+                    // Calculate from discount: box_net_total = box_rrp_total - discount
+                    const discount = parseFloat(row.discount) || 0;
+                    const boxRrpTotal = parseFloat(row.box_rrp_total);
+                    boxNetTotal = boxRrpTotal - discount;
+                } else if (row.box_net_total !== undefined && row.box_net_total !== null && row.box_net_total !== '') {
+                    // Use provided box_net_total
+                    boxNetTotal = parseFloat(row.box_net_total);
+                } else {
+                    throw new Error(`Row ${rowNum}: Must provide either box_net_total or discount`);
                 }
 
                 // Get sales rep ID from email
@@ -188,7 +201,7 @@ router.post('/import/orders', upload.single('csvfile'), async (req, res) => {
                                 salesRepId,
                                 parseInt(row.boxes_qty),
                                 parseFloat(row.box_rrp_total),
-                                parseFloat(row.box_net_total),
+                                boxNetTotal,
                                 parseFloat(row.box_build_cost_total),
                                 parseFloat(row.install_revenue) || 0,
                                 parseFloat(row.extras_revenue) || 0,
@@ -214,7 +227,7 @@ router.post('/import/orders', upload.single('csvfile'), async (req, res) => {
                             salesRepId,
                             parseInt(row.boxes_qty),
                             parseFloat(row.box_rrp_total),
-                            parseFloat(row.box_net_total),
+                            boxNetTotal,
                             parseFloat(row.box_build_cost_total),
                             parseFloat(row.install_revenue) || 0,
                             parseFloat(row.extras_revenue) || 0,
@@ -411,6 +424,7 @@ router.get('/export/orders', async (req, res) => {
 
         const orders = ordersResult.rows.map(order => ({
             ...order,
+            discount: ((parseFloat(order.box_rrp_total) || 0) - (parseFloat(order.box_net_total) || 0)).toFixed(2),
             order_date: formatDateForCSV(order.order_date),
             created_at: formatDateForCSV(order.created_at),
             updated_at: formatDateForCSV(order.updated_at)
@@ -426,6 +440,7 @@ router.get('/export/orders', async (req, res) => {
                 'sales_rep_email',
                 'boxes_qty',
                 'box_rrp_total',
+                'discount',
                 'box_net_total',
                 'box_build_cost_total',
                 'install_revenue',
@@ -495,19 +510,35 @@ router.get('/export/production', async (req, res) => {
 router.get('/template/orders', (req, res) => {
     const template = stringifySync([
         {
+            id: '',
             order_date: '15/07/2024',
             order_ref: 'ORD-001',
             sales_rep_email: 'alice@example.com',
             boxes_qty: '2',
             box_rrp_total: '2800.00',
-            box_net_total: '2600.00',
+            discount: '200.00',
+            box_net_total: '',
             box_build_cost_total: '1400.00',
             install_revenue: '500.00',
             extras_revenue: '200.00',
             notes: 'Example order'
         }
     ], {
-        header: true
+        header: true,
+        columns: [
+            'id',
+            'order_date',
+            'order_ref',
+            'sales_rep_email',
+            'boxes_qty',
+            'box_rrp_total',
+            'discount',
+            'box_net_total',
+            'box_build_cost_total',
+            'install_revenue',
+            'extras_revenue',
+            'notes'
+        ]
     });
 
     res.setHeader('Content-Type', 'text/csv');
@@ -521,6 +552,7 @@ router.get('/template/orders', (req, res) => {
 router.get('/template/production', (req, res) => {
     const template = stringifySync([
         {
+            id: '',
             production_date: '15/07/2024',
             boxes_built: '5',
             boxes_over_cost: '1',
@@ -529,7 +561,16 @@ router.get('/template/production', (req, res) => {
             notes: 'Example production entry'
         }
     ], {
-        header: true
+        header: true,
+        columns: [
+            'id',
+            'production_date',
+            'boxes_built',
+            'boxes_over_cost',
+            'over_cost_reasons_json',
+            'rework_boxes',
+            'notes'
+        ]
     });
 
     res.setHeader('Content-Type', 'text/csv');
