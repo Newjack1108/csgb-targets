@@ -14,6 +14,56 @@ const { createReadStream } = require('fs');
 const { requireAuth, requireRole } = require('../middleware/auth');
 const db = require('../db');
 
+/**
+ * Convert DD/MM/YYYY to YYYY-MM-DD for database storage
+ */
+function parseDateFromCSV(dateString) {
+    if (!dateString) return null;
+    
+    // Try DD/MM/YYYY format first
+    const ddmmyyyy = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+    const match = dateString.match(ddmmyyyy);
+    
+    if (match) {
+        const day = match[1].padStart(2, '0');
+        const month = match[2].padStart(2, '0');
+        const year = match[3];
+        return `${year}-${month}-${day}`;
+    }
+    
+    // If already in YYYY-MM-DD format, return as-is
+    const yyyymmdd = /^\d{4}-\d{2}-\d{2}$/;
+    if (dateString.match(yyyymmdd)) {
+        return dateString;
+    }
+    
+    // Try to parse as Date and convert
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    
+    throw new Error(`Invalid date format: ${dateString}. Expected DD/MM/YYYY`);
+}
+
+/**
+ * Convert YYYY-MM-DD to DD/MM/YYYY for CSV export
+ */
+function formatDateForCSV(dateString) {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
 // All routes require authentication and director role
 router.use(requireAuth);
 router.use(requireRole('director'));
@@ -133,7 +183,7 @@ router.post('/import/orders', upload.single('csvfile'), async (req, res) => {
                                 updated_at = CURRENT_TIMESTAMP
                              WHERE id = $11`,
                             [
-                                row.order_date,
+                                parseDateFromCSV(row.order_date),
                                 row.order_ref || null,
                                 salesRepId,
                                 parseInt(row.boxes_qty),
@@ -159,7 +209,7 @@ router.post('/import/orders', upload.single('csvfile'), async (req, res) => {
                             install_revenue, extras_revenue, notes
                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
                         [
-                            row.order_date,
+                            parseDateFromCSV(row.order_date),
                             row.order_ref || null,
                             salesRepId,
                             parseInt(row.boxes_qty),
@@ -284,7 +334,7 @@ router.post('/import/production', upload.single('csvfile'), async (req, res) => 
                                 notes = $6
                              WHERE id = $7`,
                             [
-                                row.production_date,
+                                parseDateFromCSV(row.production_date),
                                 parseInt(row.boxes_built),
                                 parseInt(row.boxes_over_cost) || 0,
                                 reasonsJson ? JSON.stringify(reasonsJson) : null,
@@ -305,7 +355,7 @@ router.post('/import/production', upload.single('csvfile'), async (req, res) => 
                             over_cost_reasons_json, rework_boxes, notes
                         ) VALUES ($1, $2, $3, $4, $5, $6)`,
                         [
-                            row.production_date,
+                            parseDateFromCSV(row.production_date),
                             parseInt(row.boxes_built),
                             parseInt(row.boxes_over_cost) || 0,
                             reasonsJson ? JSON.stringify(reasonsJson) : null,
@@ -359,7 +409,12 @@ router.get('/export/orders', async (req, res) => {
              ORDER BY o.order_date DESC, o.created_at DESC`
         );
 
-        const orders = ordersResult.rows;
+        const orders = ordersResult.rows.map(order => ({
+            ...order,
+            order_date: formatDateForCSV(order.order_date),
+            created_at: formatDateForCSV(order.created_at),
+            updated_at: formatDateForCSV(order.updated_at)
+        }));
 
         // Convert to CSV
         const csvData = stringifySync(orders, {
@@ -403,6 +458,8 @@ router.get('/export/production', async (req, res) => {
 
         const entries = productionResult.rows.map(entry => ({
             ...entry,
+            production_date: formatDateForCSV(entry.production_date),
+            created_at: formatDateForCSV(entry.created_at),
             over_cost_reasons_json: entry.over_cost_reasons_json 
                 ? JSON.stringify(entry.over_cost_reasons_json) 
                 : ''
@@ -438,7 +495,7 @@ router.get('/export/production', async (req, res) => {
 router.get('/template/orders', (req, res) => {
     const template = stringifySync([
         {
-            order_date: '2024-07-15',
+            order_date: '15/07/2024',
             order_ref: 'ORD-001',
             sales_rep_email: 'alice@example.com',
             boxes_qty: '2',
@@ -464,7 +521,7 @@ router.get('/template/orders', (req, res) => {
 router.get('/template/production', (req, res) => {
     const template = stringifySync([
         {
-            production_date: '2024-07-15',
+            production_date: '15/07/2024',
             boxes_built: '5',
             boxes_over_cost: '1',
             over_cost_reasons_json: '[{"reason": "material", "boxes": 1}]',
