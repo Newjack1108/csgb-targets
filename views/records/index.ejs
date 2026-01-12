@@ -24,7 +24,13 @@
         <section class="dashboard-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h3>Orders</h3>
-                <a href="/sales/orders/new" class="btn btn-primary">New Order</a>
+                <div style="display: flex; gap: 0.5rem;">
+                    <a href="/sales/orders/new" class="btn btn-primary">New Order</a>
+                    <form method="POST" action="/records/orders/delete-all" style="display: inline;">
+                        <button type="submit" class="btn btn-danger" 
+                                onclick="return confirmDeleteAll()">Delete All Orders</button>
+                    </form>
+                </div>
             </div>
             
             <table class="data-table">
@@ -114,5 +120,29 @@
     </main>
 
     <%- include('../partials/footer') %>
+
+    <script>
+        function confirmDeleteAll() {
+            const message = '⚠️ DANGER: This will DELETE ALL ORDERS permanently!\n\n' +
+                          'This action CANNOT be undone.\n\n' +
+                          'Are you absolutely sure you want to delete ALL orders?';
+            
+            if (!confirm(message)) {
+                return false;
+            }
+            
+            // Second confirmation
+            const secondMessage = 'FINAL WARNING: You are about to delete ALL orders.\n\n' +
+                                 'Type "DELETE ALL" to confirm:';
+            
+            const confirmation = prompt(secondMessage);
+            if (confirmation !== 'DELETE ALL') {
+                alert('Deletion cancelled. Orders were not deleted.');
+                return false;
+            }
+            
+            return true;
+        }
+    </script>
 </body>
 </html>

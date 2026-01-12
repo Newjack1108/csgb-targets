@@ -98,4 +98,23 @@ router.post('/production/:id/delete', async (req, res) => {
     }
 });
 
+/**
+ * POST /records/orders/delete-all - Delete ALL orders (DANGEROUS - director only)
+ */
+router.post('/orders/delete-all', async (req, res) => {
+    try {
+        // Get count before deletion for confirmation message
+        const countResult = await db.query('SELECT COUNT(*) as count FROM orders');
+        const count = parseInt(countResult.rows[0].count);
+        
+        // Delete all orders
+        await db.query('DELETE FROM orders');
+        
+        res.redirect(`/records?success=All ${count} orders deleted successfully`);
+    } catch (error) {
+        console.error('Delete all orders error:', error);
+        res.redirect('/records?error=Error deleting all orders');
+    }
+});
+
 module.exports = router;
